@@ -1,1 +1,1 @@
-#aqui vai
+#aqui vai a tela para quando uma nota for selecionada

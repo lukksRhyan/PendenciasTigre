@@ -3,17 +3,16 @@ import json
 import glob
 import tkinter as tk
 from tkinter import filedialog, messagebox
-
-from openpyxl.styles.builtins import comma
-
-from icms_calc import IcmsCalc
-from xml_handle import processar_nota
+from icms_calc import IcmsCalc  # Certifique-se de que o arquivo icms_calc.py existe
+from xlsx_handle import XlsxHandler
+from xml_handle import processar_nota  # Certifique-se de que processar_nota está correto
 
 CAMINHO = "C:\\Users\\Cliente\\Desktop\\Notas Tigre\\"
 
 
 class GerenciadorNotas:
     def __init__(self, root):
+        self.current_json_filename = ""
         self.root = root
         self.root.title("Gerenciador de Notas - Tigre")
         self.root.geometry("500x400")
@@ -40,12 +39,16 @@ class GerenciadorNotas:
         self.consultar_btn = tk.Button(root, text="🔍 Consultar Nota", command=self.consultar_nota, width=20, height=2)
         self.consultar_btn.pack(pady=5)
 
-        self.calc_icms_btn = tk.Button(root, text="Calcular ICMS de produto",command=self.calc_icms, width=20, height=2  )
+        # Botão para calcular ICMS de um produto
+        self.calc_icms_btn = tk.Button(root, text="🧮 Calcular ICMS", command=self.abrir_calc, width=20, height=2)
         self.calc_icms_btn.pack(pady=5)
 
         # Lista de notas (será preenchida dinamicamente)
         self.lista_notas = tk.Listbox(root, width=50, height=10)
         self.lista_notas.pack(pady=10)
+
+    def abrir_calc(self):
+        self.calculadora = IcmsCalc()
 
     def listar_notas(self):
         """Lista todas as notas disponíveis."""
@@ -77,14 +80,17 @@ class GerenciadorNotas:
             numero_nota = os.path.splitext(os.path.basename(arquivo_xml))[0]
             json_filename = os.path.join(CAMINHO, f"{numero_nota}.json")
 
-            with open(json_filename, "w", encoding="utf-8") as json_file:
-                json.dump(json_data, json_file, indent=4, ensure_ascii=False)
+            #with open(json_filename, "w", encoding="utf-8") as json_file:
+            #    json.dump(json_data, json_file, indent=4, ensure_ascii=False)
 
             messagebox.showinfo("Sucesso", f"✅ Nota {numero_nota} adicionada com sucesso!")
-            self.listar_notas()  # Atualiza a lista de notas
+            #self.listar_notas()  # Atualiza a lista de notas
 
         except Exception as e:
             messagebox.showerror("Erro", f"❌ Erro ao processar nota: {e}")
+
+    def exportar_excel(self):
+        XlsxHandler(json_file_path=self.current_json_filename).json_to_excel()
 
     def consultar_nota(self):
         """Consulta uma nota e exibe os detalhes em uma nova janela."""
@@ -95,6 +101,7 @@ class GerenciadorNotas:
             return
 
         json_filename = os.path.join(CAMINHO, numero + ".json")
+        self.current_json_filename = json_filename
 
         if not os.path.exists(json_filename):
             messagebox.showerror("Erro", f"❌ Nota {numero} não encontrada!")
@@ -102,6 +109,7 @@ class GerenciadorNotas:
 
         with open(json_filename, "r", encoding="utf-8") as json_file:
             json_data = json.load(json_file)
+
 
         # Criar uma nova janela para exibir a nota
         janela_nota = tk.Toplevel(self.root)
@@ -112,13 +120,13 @@ class GerenciadorNotas:
         text_area.pack(pady=10)
         text_area.insert(tk.END, json.dumps(json_data, indent=4, ensure_ascii=False))
         text_area.config(state=tk.DISABLED)
-
-    def calc_icms(self):
-        calc = IcmsCalc()
-
+        botao_exportar = tk.Button(janela_nota, text="Exportar XML", command=self.exportar_excel, width=20, height=2)
+        botao_exportar.pack(pady=5)
 
 
-# Iniciar a interface gráfica
+
+
+# **🚀 Função Principal**
 if __name__ == "__main__":
     root = tk.Tk()
     app = GerenciadorNotas(root)
